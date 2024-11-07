@@ -1,0 +1,7 @@
+torch 
+torchvision 
+transformers 
+pillow 
+numpy
+datasets
+h5py
