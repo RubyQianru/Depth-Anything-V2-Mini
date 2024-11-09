@@ -1,22 +1,28 @@
+import torch
+from torch.utils.data import Dataset
+import h5py
 import numpy as np
+import utils as u
 
+class NYUDepthV2Dataset(Dataset):
+    def __init__(self, file_path, transform=None):
+        self.file = h5py.File(file_path, 'r')
+        self.images = self.file['images']
+        self.depths = self.file['depths']
+        self.transform = transform
 
-def colored_depthmap(depth, d_min=None, d_max=None):
-    if d_min is None:
-        d_min = np.min(depth)
-    if d_max is None:
-        d_max = np.max(depth)
-    depth_relative = (depth - d_min) / (d_max - d_min)
-    return 255 * cmap(depth_relative)[:,:,:3] # H, W, C
+    def __len__(self):
+        return self.images.shape[0]
 
+    def __getitem__(self, idx):
+        image = self.images[idx].transpose(1, 2, 0)  # Change from (3, H, W) to (H, W, 3)
+        depth = self.depths[idx]
 
-def merge_into_row(input, depth_target):
-    input = np.array(input)
-    depth_target = np.squeeze(np.array(depth_target))
+        # if self.transform:
+        #     image = self.transform(image)
+        #     depth = torch.from_numpy(depth).unsqueeze(0).float()  # Add channel dimension and convert to float
 
-    d_min = np.min(depth_target)
-    d_max = np.max(depth_target)
-    depth_target_col = colored_depthmap(depth_target, d_min, d_max)
-    img_merge = np.hstack([input, depth_target_col])
-    return img_merge
+        return image, depth
 
+    def __del__(self):
+        self.file.close()
