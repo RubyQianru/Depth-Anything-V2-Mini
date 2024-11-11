@@ -5,18 +5,11 @@ from transformers import AutoModelForDepthEstimation, AutoImageProcessor
 class DepthAnythingBaseline(nn.Module):
     def __init__(self, pretrained_model_name="depth-anything/Depth-Anything-V2-Small-hf"):
         super(DepthAnythingBaseline, self).__init__()
-        self.image_processor = AutoImageProcessor.from_pretrained(pretrained_model_name)
         self.depth_anything_v2 = AutoModelForDepthEstimation.from_pretrained(pretrained_model_name)
 
         # Freeze the pretrained model parameters
         # for param in self.depth_anything_v2.parameters():
         #     param.requires_grad = False
-        
-        # Get the output dimension of the Depth-Anything-V2 model
-        # with torch.no_grad():
-        #     dummy_input = torch.randn(1, 3, 384, 384)  # Adjust size if needed
-        #     dummy_output = self.depth_anything_v2(dummy_input)
-        #     output_dim = dummy_output.predicted_depth.shape[1:]
         
         # self.custom_head = nn.Sequential(
         #     nn.Conv2d(1, 64, kernel_size=3, padding=1),
@@ -26,13 +19,12 @@ class DepthAnythingBaseline(nn.Module):
         #     nn.Conv2d(32, 1, kernel_size=1)
         # )
 
-    def forward(self, x):
-        depth_output = self.depth_anything_v2(x).predicted_depth
-        
-        # Pass through custom head
+    def forward(self, inputs):
+        with torch.no_grad():
+            outputs = self.depth_anything_v2(inputs).predicted_depth
         # refined_depth = self.custom_head(depth_output)
-        
-        return depth_output
+        outputs = nn.functional.interpolate(outputs.unsqueeze(1), size=(240, 320), mode='bilinear', align_corners=False).squeeze(1)
+        return outputs
 
 def create_baseline():
     model = DepthAnythingBaseline()
