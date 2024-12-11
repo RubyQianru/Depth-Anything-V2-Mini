@@ -8,3 +8,8 @@ datasets
 h5py
 opencv-python
 tqbm
+matplotlib
+opencv-python
+tqdm
+optimum
+xformers
